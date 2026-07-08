@@ -14,9 +14,6 @@ jobs:
     environment: prd
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Login to Azure
         uses: azure/login@v3
         with:
@@ -25,9 +22,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Show Azure context
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            az account show \
-              --query "{subscription:name, subscriptionId:id, tenantId:tenantId}" \
-              --output table
+        run: |
+          az account show \
+            --query "{subscription:name, subscriptionId:id, tenantId:tenantId}" \
+            --output table
