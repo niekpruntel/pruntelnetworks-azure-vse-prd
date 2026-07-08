@@ -31,18 +31,20 @@ param appServiceName string
 param privateEndpointName string
 
 
-var privateEndpointSubnetResourceId = resourceId(
-  networkResourceGroupName,
-  'Microsoft.Network/virtualNetworks/subnets',
-  virtualNetworkName,
-  privateEndpointSubnetName
-)
+resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2025-05-01' existing = {
+  name: virtualNetworkName
+  scope: resourceGroup(networkResourceGroupName)
+}
 
-var privateDnsZoneResourceId = resourceId(
-  privateDnsZoneResourceGroupName,
-  'Microsoft.Network/privateDnsZones',
-  privateDnsZoneName
-)
+resource existingPrivateEndpointSubnet 'Microsoft.Network/virtualNetworks/subnets@2025-05-01' existing = {
+  name: privateEndpointSubnetName
+  parent: existingVirtualNetwork
+}
+
+resource existingPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
+  name: privateDnsZoneName
+  scope: resourceGroup(privateDnsZoneResourceGroupName)
+}
 
 
 module webResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
@@ -98,12 +100,12 @@ module appService 'br/public:avm/res/web/site:0.23.1' = {
       {
         name: privateEndpointName
         resourceGroupResourceId: webResourceGroup.outputs.resourceId
-        subnetResourceId: privateEndpointSubnetResourceId
+        subnetResourceId: existingPrivateEndpointSubnet.id
 
         privateDnsZoneGroup: {
           privateDnsZoneGroupConfigs: [
             {
-              privateDnsZoneResourceId: privateDnsZoneResourceId
+              privateDnsZoneResourceId: existingPrivateDnsZone.id
             }
           ]
         }
